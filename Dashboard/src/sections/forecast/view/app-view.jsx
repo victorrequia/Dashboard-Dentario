@@ -1,112 +1,152 @@
-import axios from 'axios';
+import mqtt from 'mqtt';
 import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 
+import Card from '@mui/material/Card';
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Unstable_Grid2'; // Esta importação pode precisar ser atualizada dependendo da versão do MUI
-
-import Box from '@mui/material/Box';
+import Grid from '@mui/material/Unstable_Grid2'; // Verifique se está correto conforme a versão do MUI
+import Table from '@mui/material/Table';
 import Paper from '@mui/material/Paper';
-import AirIcon from '@mui/icons-material/Air';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import TableRow from '@mui/material/TableRow';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
 import Typography from '@mui/material/Typography';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import OpacityIcon from '@mui/icons-material/Opacity';
-import CompressIcon from '@mui/icons-material/Compress';
-import ThermostatIcon from '@mui/icons-material/Thermostat';
-import CircularProgress from '@mui/material/CircularProgress';
+import CardContent from '@mui/material/CardContent';
+import TableContainer from '@mui/material/TableContainer';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-// ----------------------------------------------------------------------
+
 const theme = createTheme({
   palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#ffc107' },
-    background: { paper: '#0000' },
+    primary: { main: '#007BFF' },
+    secondary: { main: '#FFC107' },
+    background: { default: '#f5f5f5', paper: '#ffffff' },
   },
-  typography: { fontFamily: 'Roboto, sans-serif' },
+  typography: {
+    fontFamily: 'Comic Neue, Arial, sans-serif',
+    h6: { fontSize: '1.25rem' },
+    body1: { fontSize: '1rem' },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: { borderRadius: '15px', boxShadow: '0 3px 5px 2px rgba(0, 0, 0, .1)' },
+      },
+    },
+  },
 });
 
-const WeatherAttribute = ({ icon: Icon, label, value }) => (
-  <Box sx={{ textAlign: 'center' }}>
-    <Icon sx={{ verticalAlign: 'bottom' }} />
-    <Typography variant="h6">{value}</Typography>
-    <Typography variant="caption">{label}</Typography>
-  </Box>
-);
+// Conecta ao broker MQTT na porta 9001 usando WebSocket
+const client = mqtt.connect('ws://localhost:9001');
 
-WeatherAttribute.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+client.on('connect', () => {
+  console.log('Conectado ao broker MQTT!');
+  client.subscribe('topico/resposta', (err) => {
+    if (!err) {
+      console.log('Inscrito no tópico topico/resposta');
+    }
+  });
+});
+
+const publishMessage = (message) => {
+  const payload = JSON.stringify({ informacao: message });
+  const topic = 'topico/teste';
+  client.publish(topic, payload, () => {
+    console.log(`Publicado: ${payload} no tópico ${topic}`);
+  });
 };
 
-const WeatherView = () => {
-  const [weatherData, setWeatherData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+const DataTable = ({ rows }) => (
+  <TableContainer component={Paper}>
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>Event Type</TableCell>
+          <TableCell>Report Number</TableCell>
+          <TableCell>Patient Info</TableCell>
+          <TableCell>Device Operator</TableCell>
+          <TableCell>Device Product Code Name</TableCell>
+          <TableCell>Brand Generic Name</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {rows.map((row, index) => (
+          <TableRow key={index}>
+            <TableCell>{row.event_type}</TableCell>
+            <TableCell>{row.report_number}</TableCell>
+            <TableCell>
+              {row.patient.map((patient, idx) => (
+                <div key={idx}>
+                  <div>Date Received: {patient.date_received}</div>
+                  <div>Age: {patient.patient_age}</div>
+                  <div>Ethnicity: {patient.patient_ethnicity}</div>
+                  <div>Problems: {JSON.stringify(patient.patient_problems)}</div>
+                  <div>Race: {patient.patient_race}</div>
+                  <div>Sequence Number: {patient.patient_sequence_number}</div>
+                  <div>Sex: {patient.patient_sex}</div>
+                  <div>Weight: {patient.patient_weight}</div>
+                  <div>Outcome: {JSON.stringify(patient.sequence_number_outcome)}</div>
+                  <div>Treatment: {JSON.stringify(patient.sequence_number_treatment)}</div>
+                  <Divider sx={{ my: 1 }} />
+                </div>
+              ))}
+            </TableCell>
+            <TableCell>{row['device.device_operator']}</TableCell>
+            <TableCell>{row['new_device.device_product_code_name']}</TableCell>
+            <TableCell>{row['new_device.brand_generic_name']}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
 
-  const fetchData = async () => {
-    try {
-      const { data } = await axios('https://lora-placa-solar-server-proxy.onrender.com/previsao/joinville');
-      setWeatherData(data);
-      setError(false);
-    } catch (apiError) {
-      console.error('Erro ao buscar dados:', apiError);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+DataTable.propTypes = {
+  rows: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
+export default function AppView() {
+  const [klcData, setKlcData] = useState([]);
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 1800000);
-    return () => clearInterval(interval);
+    client.on('message', (topic, message) => {
+      console.log(`Mensagem recebida: ${message.toString()} no tópico ${topic}`);
+      const jsonData = JSON.parse(message.toString());
+      setKlcData(jsonData);
+    });
   }, []);
-
-  if (error) {
-    return <Container><Typography variant="h6">Erro ao carregar os dados.</Typography></Container>;
-  }
 
   return (
     <ThemeProvider theme={theme}>
-      <Container maxWidth="md">
-        <Paper elevation={3} sx={{ p: 2 }}>
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <Box>
-              <Typography variant="h4" align="center" gutterBottom sx={{ p: 4 }} >
-                Tempo agora para {weatherData.name}, {weatherData.state}
-              </Typography>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={12} md={6} lg={4} sx={{ textAlign: 'center' }}>
-                  <WbSunnyIcon sx={{ fontSize: 80, color: '#ffeb3b' }} />
-                  <Typography variant="h5">{weatherData.data.condition}</Typography>
-                </Grid>
-                <Grid item xs={12} md={6} lg={8}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
-                    <WeatherAttribute icon={ThermostatIcon} label="Temperatura" value={`${weatherData.data.temperature}°C`} />
-                    <WeatherAttribute icon={OpacityIcon} label="Umidade" value={`${weatherData.data.humidity}%`} />
-                    <WeatherAttribute icon={AirIcon} label="Vento" value={weatherData.data.wind_direction} />
-                    <WeatherAttribute icon={CompressIcon} label="Pressão" value={`${weatherData.data.pressure} hPa`} />
-                  </Box>
-                </Grid>
+      <Container maxWidth="xl">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Grid container spacing={2} justifyContent="center">
+              <Grid item>
+                <Button variant="contained" color="primary" onClick={() => publishMessage('KLC')}>KLC</Button>
               </Grid>
-              <Typography variant="caption" display="block" align="right" sx={{ mt: 2 }}>
-                Última atualização: {weatherData.data.date}
-              </Typography>
-              <Typography variant="caption" display="block" align="right">
-                Fonte: Clima Tempo
-              </Typography>
-            </Box>
-          )}
-        </Paper>
+              <Grid item>
+                <Button variant="contained" color="primary" onClick={() => publishMessage('LZD')}>LZD</Button>
+              </Grid>
+              <Grid item>
+                <Button variant="contained" color="primary" onClick={() => publishMessage('EKZ')}>EKZ</Button>
+              </Grid>
+            </Grid>
+            <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Dados Filtrados</Typography>
+                <DataTable rows={klcData} />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Container>
     </ThemeProvider>
   );
-};
-
-export default WeatherView;
+}

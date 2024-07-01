@@ -7,7 +7,7 @@ import { useRef, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
-import Badge from '@mui/material/Badge';
+// import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
@@ -68,9 +68,9 @@ export default function NotificationsPopover() {
 
   const [open, setOpen] = useState(null);
 
-  const handleOpen = (event) => {
-    setOpen(event.currentTarget);
-  };
+  // const handleOpen = (event) => {
+  //   setOpen(event.currentTarget);
+  // };
 
   const handleClose = () => {
     setOpen(null);
@@ -87,11 +87,11 @@ export default function NotificationsPopover() {
 
   return (
     <>
-      <IconButton color={open ? 'primary' : 'default'} onClick={handleOpen}>
+      {/* <IconButton color={open ? 'primary' : 'default'} onClick={handleOpen}>
         <Badge badgeContent={totalUnRead} color="error">
           <Iconify width={24} icon="mdi:bell-ring-outline" />
         </Badge>
-      </IconButton>
+      </IconButton> */}
 
       <Popover
         open={!!open}

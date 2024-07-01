@@ -1,29 +1,26 @@
-import MovingSharpIcon from '@mui/icons-material/MovingSharp';
-import SolarPowerOutlinedIcon from '@mui/icons-material/SolarPowerOutlined';
-import ElectricMeterOutlinedIcon from '@mui/icons-material/ElectricMeterOutlined';
-import DeveloperBoardOutlinedIcon from '@mui/icons-material/DeveloperBoardOutlined';
+import ReportIcon from '@mui/icons-material/Report';
 // ----------------------------------------------------------------------
 const navConfig = [
   {
-    title: 'Previsao',
+    title: 'Reports',
     path: '/',
-    icon: <MovingSharpIcon sx={{ width: 1, height: 1 }} />
+    icon: <ReportIcon sx={{ width: 1, height: 1 }} />
   },
-  {
-    title: 'Ambiente',
-    path: 'environment',
-    icon: <SolarPowerOutlinedIcon sx={{ width: 1, height: 1 }} />,
-  },
-  {
-    title: 'Servidor',
-    path: 'server',
-    icon: <DeveloperBoardOutlinedIcon sx={{ width: 1, height: 1 }} />
-  },
-  {
-    title: 'Inversor',
-    path: 'inverter',
-    icon: <ElectricMeterOutlinedIcon sx={{ width: 1, height: 1 }} />
-  }
+  // {
+  //   title: 'Ambiente',
+  //   path: 'environment',
+  //   icon: <SolarPowerOutlinedIcon sx={{ width: 1, height: 1 }} />,
+  // },
+  // {
+  //   title: 'Servidor',
+  //   path: 'server',
+  //   icon: <DeveloperBoardOutlinedIcon sx={{ width: 1, height: 1 }} />
+  // },
+  // {
+  //   title: 'Inversor',
+  //   path: 'inverter',
+  //   icon: <ElectricMeterOutlinedIcon sx={{ width: 1, height: 1 }} />
+  // }
   /* {
     title: 'user',
     path: '/user',
